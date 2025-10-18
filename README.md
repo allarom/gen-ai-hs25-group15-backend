@@ -1,21 +1,71 @@
-# gen-ai-hs25-group15-backend
-For Visual Studio to specify your environment
-python3 -m venv .venv   
-source .venv/bin/activate        # macOS/Linux
-# or
-.venv\Scripts\activate           # Windows PowerShell
+# 🧠 gen-ai-hs25-group15-backend
 
-pip install -r requirements.txt (list of packages with versions, was conflicting)
+This backend powers the **HSG MBA CV Screening RAG system** — it parses uploaded CVs, evaluates eligibility against the University of St. Gallen Full-Time MBA requirements, and provides explainable feedback using the **Cognee** framework.
 
-Run FastAPI locally
+---
+
+## 📦 Environment Configuration
+
+A `.env` file should be placed in the **root directory** (same level as `README.MD`) and include:
+
+```env
+OPENAI_API_KEY=your_openai_api_key_here
+LLM_API_KEY=${OPENAI_API_KEY}
+COGNEE_DATA_DIR=./cognee_data
+LLM_MODEL_NAME=text-embedding-3-small
+COGNEE_DISABLE_PDF=1
+UNSTRUCTURED_DISABLE_PDF=1
+UNSTRUCTURED_USE_LOCAL_INFERENCE=1
+```
+
+⚠️ You must provide your own OpenAI API key to enable embedding and question-answering functionality.
+
+🧰 Setting up the Python Environment
+1️⃣ Create and activate a virtual environment
+
+macOS / Linux
+
+```
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+
+Windows (PowerShell)
+
+```
+python -m venv .venv
+.venv\Scripts\activate
+```
+
+2️⃣ Install dependencies
+
+`pip install -r requirements.txt`
+
+Note: Versions are pinned to avoid conflicts.
+
+🚀 Running the Application
+
 Inside the virtual environment, run:
 
-uvicorn app.main:app --reload
+`uvicorn app.main:app --reload`
 
-or if you want to specify another port : uvicorn app.main:app --reload --PORT 8080
-You’ll see something like:
+
+Or to specify a custom port (e.g., 8080):
+
+`uvicorn app.main:app --reload --port 8080`
+
+
+You should see output similar to:
 
 INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
 
+🌐 Access the API
 
-Check http://127.0.0.1:8000/docs to see different endpoints
+Once the server is running, open your browser at:
+
+👉 `http://127.0.0.1:8000/docs`
+
+This will display the interactive Swagger UI, where you can test the available endpoints:
+
+`/screen` — upload a CV and check eligibility
