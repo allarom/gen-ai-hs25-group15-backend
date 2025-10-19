@@ -7,7 +7,7 @@ from fastapi import FastAPI, UploadFile, HTTPException
 from fastapi.responses import JSONResponse
 from docx import Document
 from pathlib import Path
-from cognee import add, search
+from cognee import add, search, cognify, prune
 import openai
 
  # .env should be placed in root of repo
@@ -55,7 +55,21 @@ async def preload_requirements():
 
     # Ingest into Cognee knowledge base
     try:
+        # Create a clean slate for cognee -- reset data and system state
+        await prune.prune_data()
+        await prune.prune_system(metadata=True)
+
+        # Add content, from Cognee’s perspective, this string is a document
         result = await add(text)
+
+         # Process with LLMs to build the knowledge graph
+         # All documents are chunked, entities are extracted, 
+         # relationships are made, and summaries are generated. 
+        await cognify()
+
+        # # Add memory algorithms to the graph
+        # await memify()
+        print('ingest result', result)
         print("[Startup] Requirements ingested into Cognee successfully.")
     except Exception as e:
         print(f"[Startup ERROR] Failed to ingest requirements: {e}")
@@ -70,10 +84,13 @@ async def screen(file: UploadFile):
         text = docx_to_text(buf)
 
         # Retrieve relevant requirements from knowledge base
+        # search — Queries the knowledge graph using vector similarity 
+        # and graph traversal to find relevant information and return contextual results.
         results = await search(
             query_text=text,
             top_k=3
         )
+        print('results', results)
         retrieved_text = "\n".join(results)
         
         # Augment LLM generation
@@ -84,7 +101,7 @@ async def screen(file: UploadFile):
         Applicant CV:
         {text}
 
-        Does the applicant meet the requirements? List missing criteria.
+        Does the applicants CV meet the requirements to start application? List missing criteria. 
         """
         client = openai.OpenAI()  # or openai.AsyncOpenAI() if you want async
 
