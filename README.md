@@ -69,3 +69,6 @@ Once the server is running, open your browser at:
 This will display the interactive Swagger UI, where you can test the available endpoints:
 
 `/screen` — upload a CV and check eligibility
+
+Knowledge visualization:
+`http://127.0.0.1:8000/static/graph_after_cognify.html`

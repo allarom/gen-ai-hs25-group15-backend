@@ -4,11 +4,13 @@ from io import BytesIO
 from dotenv import load_dotenv
 
 from fastapi import FastAPI, UploadFile, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from docx import Document
 from pathlib import Path
 from cognee import add, search, cognify, prune
 import openai
+from cognee.api.v1.visualize.visualize import visualize_graph
 
  # .env should be placed in root of repo
 def load_env():
@@ -29,6 +31,7 @@ study_requirements_file = 'HSG-MBA-application-requirements.docx'
 
 # FastAPI initialization
 app = FastAPI(title="Group15 Eligibility API")
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Helpers
 def docx_to_text(file_bytes: bytes) -> str:
@@ -66,7 +69,7 @@ async def preload_requirements():
          # All documents are chunked, entities are extracted, 
          # relationships are made, and summaries are generated. 
         await cognify()
-
+        await visualize_graph("./static/graph_after_cognify.html")
         # # Add memory algorithms to the graph
         # await memify()
         print('ingest result', result)
@@ -124,3 +127,7 @@ async def screen(file: UploadFile):
             status_code=500,
             content={"ok": False, "error": type(e).__name__, "detail": str(e)[:500]},
         )
+
+@app.get("/")
+def read_root():
+    return FileResponse("static/graph_after_cognify").html
