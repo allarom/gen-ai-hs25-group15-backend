@@ -11,6 +11,7 @@ from pathlib import Path
 from cognee import add, search, cognify, prune
 import openai
 from cognee.api.v1.visualize.visualize import visualize_graph
+from cognee.api.v1.visualize.visualize import visualize_graph
 
  # .env should be placed in root of repo
 def load_env():
@@ -74,6 +75,7 @@ async def preload_requirements():
         # await memify()
         print('ingest result', result)
         print("[Startup] Requirements ingested into Cognee successfully.")
+        
     except Exception as e:
         print(f"[Startup ERROR] Failed to ingest requirements: {e}")
 
