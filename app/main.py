@@ -9,6 +9,7 @@ from docx import Document
 from pathlib import Path
 from cognee import add, search, cognify, prune
 import openai
+from cognee.api.v1.visualize.visualize import visualize_graph
 
  # .env should be placed in root of repo
 def load_env():
@@ -66,11 +67,12 @@ async def preload_requirements():
          # All documents are chunked, entities are extracted, 
          # relationships are made, and summaries are generated. 
         await cognify()
-
+        await visualize_graph("./graph_after_cognify.html")
         # # Add memory algorithms to the graph
         # await memify()
         print('ingest result', result)
         print("[Startup] Requirements ingested into Cognee successfully.")
+        
     except Exception as e:
         print(f"[Startup ERROR] Failed to ingest requirements: {e}")
 
