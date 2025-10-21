@@ -59,8 +59,8 @@ async def preload_requirements():
     # Ingest into Cognee knowledge base
     try:
         # Create a clean slate for cognee -- reset data and system state
-        await prune.prune_data()
-        await prune.prune_system(metadata=True)
+        # await prune.prune_data()
+        # await prune.prune_system(metadata=True)
 
         # Add content, from Cognee’s perspective, this string is a document
         result = await add(text)
@@ -85,38 +85,20 @@ async def screen(file: UploadFile):
             raise HTTPException(400, "Only .docx supported")
 
         buf = await file.read()
-        text = docx_to_text(buf)
+        cv = docx_to_text(buf)
+        prompt = 'Does the following applicants CV meet the requirements to start application? List missing criteria and actionable steps. \n\n'
 
         # Retrieve relevant requirements from knowledge base
         # search — Queries the knowledge graph using vector similarity 
         # and graph traversal to find relevant information and return contextual results.
-        results = await search(
-            query_text=text,
+        cognee_result = await search(
+            query_text= prompt + cv,
             top_k=3
-        )
-        print('results', results)
-        retrieved_text = "\n".join(results)
-        
-        # Augment LLM generation
-        prompt = f"""
-        MBA Requirements:
-        {retrieved_text}
-
-        Applicant CV:
-        {text}
-
-        Does the applicants CV meet the requirements to start application? List missing criteria. 
-        """
-        client = openai.OpenAI()  # or openai.AsyncOpenAI() if you want async
-
-        response = client.chat.completions.create(
-            model="gpt-4",
-            messages=[{"role": "user", "content": prompt}]
         )
 
         return {
             "ok": True,
-            "verdict": response.choices[0].message.content
+            "verdict": cognee_result
         }
 
     except HTTPException:
