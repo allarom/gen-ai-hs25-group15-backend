@@ -1,6 +1,8 @@
-# 🧠 gen-ai-hs25-group15-backend
+# 🧠 gen-ai-hs25-group15
 
-This backend powers the **HSG MBA CV Screening RAG system** — it parses uploaded CVs, evaluates eligibility against the University of St. Gallen Full-Time MBA requirements, and provides explainable feedback using the **Cognee** framework.
+This application powers the **HSG MBA CV Screening RAG system** — it parses uploaded CVs, This app implements a Retrieval-Augmented Generation (RAG) chatbot that helps applicants check whether they meet the admission requirements for the University of St. Gallen Full-Time MBA program.
+
+It uses the Cognee framework for knowledge ingestion, semantic memory, and graph visualization — without needing any additional databases or orchestration layers.
 
 ---
 
@@ -9,10 +11,10 @@ This backend powers the **HSG MBA CV Screening RAG system** — it parses upload
 A `.env` file should be placed in the **root directory** (same level as `README.MD`) and include:
 
 ```env
-OPENAI_API_KEY=your_openai_api_key_here
+OPENAI_API_KEY=your_api_key
 LLM_API_KEY=${OPENAI_API_KEY}
 COGNEE_DATA_DIR=./cognee_data
-LLM_MODEL_NAME=text-embedding-3-small
+LLM_MODEL_NAME=gpt-4o-mini
 COGNEE_DISABLE_PDF=1
 UNSTRUCTURED_DISABLE_PDF=1
 UNSTRUCTURED_USE_LOCAL_INFERENCE=1
@@ -48,12 +50,12 @@ Note: Versions are pinned to avoid conflicts.
 
 Inside the virtual environment, run:
 
-`uvicorn app.main:app --reload`
+`uvicorn main:app --reload`
 
 
 Or to specify a custom port (e.g., 8080):
 
-`uvicorn app.main:app --reload --port 8080`
+`uvicorn main:app --reload --port 8080`
 
 
 You should see output similar to:
@@ -68,7 +70,12 @@ Once the server is running, open your browser at:
 
 This will display the interactive Swagger UI, where you can test the available endpoints:
 
-`/screen` — upload a CV and check eligibility
+`/chat` — upload a CV and and ask questions about eligibility. For example: "Can I apply for MBA programm?"
+Click on /chat, Try it out, upload docx CV and enter question. Click on execute. You can enter multiple questions. Offtopic questions will be not answered.
 
-Knowledge visualization:
+We provide 2 CVs for testing, eligible and non eligible.
+
+`/reset` - clears state of the app, if for example requirement file was changed
+
+Knowledge visualization requirements:
 `http://127.0.0.1:8000/static/graph_after_cognify.html`

@@ -1,15 +1,12 @@
-import os
-import traceback
-from io import BytesIO
-from dotenv import load_dotenv
-
-from fastapi import FastAPI, UploadFile, HTTPException
-from fastapi.responses import JSONResponse, FileResponse
-from fastapi.staticfiles import StaticFiles
+from fastapi import FastAPI, UploadFile, File, Form
+from fastapi.middleware.cors import CORSMiddleware
 from docx import Document
+from io import BytesIO
+import os
+from fastapi.staticfiles import StaticFiles
+from dotenv import load_dotenv
 from pathlib import Path
 from cognee import add, search, cognify, prune
-import openai
 from cognee.api.v1.visualize.visualize import visualize_graph
 
  # .env should be placed in root of repo
@@ -29,88 +26,78 @@ load_env()
 data_dir = './cognee_data'
 study_requirements_file = 'HSG-MBA-application-requirements.docx' 
 
-# FastAPI initialization
-app = FastAPI(title="Group15 Eligibility API")
+
+app = FastAPI(title="Minimal Cognee Chat")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Helpers
+# ───────────────────────────────────────────────
+# Helper to extract text from uploaded .docx
+# ───────────────────────────────────────────────
 def docx_to_text(file_bytes: bytes) -> str:
-    file_stream = BytesIO(file_bytes)
-    doc = Document(file_stream)
+    doc = Document(BytesIO(file_bytes))
     return "\n".join(p.text for p in doc.paragraphs if p.text.strip())
 
-# Path to your requirements file 
-study_requirements_file = os.path.join(
-    os.path.dirname(__file__), study_requirements_file
-)
-# Ingest requirements once at startup 
+# ───────────────────────────────────────────────
+# Upload + ask in one go
+# ───────────────────────────────────────────────
+@app.post("/chat")
+async def chat(file: UploadFile = File(...), question: str = Form(...)):
+    if not file.filename.lower().endswith(".docx"):
+        return {"ok": False, "error": "Only .docx files supported"}
+
+    # Extract CV text
+    file_bytes = await file.read()
+    cv_text = docx_to_text(file_bytes)
+
+    # https://docs.cognee.ai/core-concepts/main-operations/search
+    # We input CV text, the question, and context about the role
+
+    # Under the hood, Cognee blends vector similarity, graph structure,
+    # and LLM reasoning to return answers with context and provenance.
+    results = await search(
+        query_text=(
+            "You are an admissions assistant for the HSG Full-Time MBA. "
+            "Answer strictly using the CV summary and policy. "
+            f"This is the applicant's CV: {cv_text}. "
+            f"This is the applicant's question: {question}"
+        ),
+        top_k=3
+    )
+    # Simple textual answer (Cognee handles the LLM call internally)
+    return {"ok": True, "answer": results}
+
+# ───────────────────────────────────────────────
+# Example: preload the HSG policy
+# ───────────────────────────────────────────────
 @app.on_event("startup")
-async def preload_requirements():
-    print(f"[Startup] Loading requirements from {study_requirements_file}")
-    if not os.path.exists(study_requirements_file):
-        print(f"[WARN] Could not find {study_requirements_file}")
-        return
+async def preload_policy():
+    policy_path = "HSG-MBA-application-requirements.docx"
+    # if you are changing requirements file make sure, you are resetting the system
+    # await prune.prune_data()
+    # await prune.prune_system(metadata=True)
 
-    with open(study_requirements_file, "rb") as f:
-        buf = f.read()
-
-    text = docx_to_text(buf)
-
-    # Ingest into Cognee knowledge base
-    try:
-        # Create a clean slate for cognee -- reset data and system state
-        # await prune.prune_data()
-        # await prune.prune_system(metadata=True)
-
-        # Add content, from Cognee’s perspective, this string is a document
-        result = await add(text)
-
-         # Process with LLMs to build the knowledge graph
-         # All documents are chunked, entities are extracted, 
-         # relationships are made, and summaries are generated. 
-        await cognify()
-        await visualize_graph("./static/graph_after_cognify.html")
-        # # Add memory algorithms to the graph
-        # await memify()
-        print('ingest result', result)
-        print("[Startup] Requirements ingested into Cognee successfully.")
+    if os.path.exists(policy_path):
+        with open(policy_path, "rb") as f:
+            requirements = docx_to_text(f.read())
         
-    except Exception as e:
-        print(f"[Startup ERROR] Failed to ingest requirements: {e}")
+        # https://docs.cognee.ai/core-concepts/main-operations/add
+        # takes your files, directories, or raw text, normalizes them into plain text,
+        #  and records them into a dataset
+        await add(requirements)
 
-@app.post("/screen")
-async def screen(file: UploadFile):
-    try:
-        if not file.filename.lower().endswith(".docx"):
-            raise HTTPException(400, "Only .docx supported")
+        # https://docs.cognee.ai/core-concepts/main-operations/cognify
+        # turns plain text into structured knowledge: chunks, embeddings, summaries, nodes,
+        # and edges that live in Cognee’s vector and graph stores
+        await cognify()
 
-        buf = await file.read()
-        cv = docx_to_text(buf)
-        prompt = 'Does the following applicants CV meet the requirements to start application? List missing criteria and actionable steps. \n\n'
+        # you can access the knowledge graph visualization of requirements 
+        # at: http://127.0.0.1:8000/static/graph_after_cognify.html
+        await visualize_graph("./static/graph_after_cognify.html")
+        print("[Startup] Ingested HSG policy for context.")
 
-        # Retrieve relevant requirements from knowledge base
-        # search — Queries the knowledge graph using vector similarity 
-        # and graph traversal to find relevant information and return contextual results.
-        cognee_result = await search(
-            query_text= prompt + cv,
-            top_k=3
-        )
-
-        return {
-            "ok": True,
-            "verdict": cognee_result
-        }
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        print("SCREEN ERROR:", repr(e))
-        traceback.print_exc()
-        return JSONResponse(
-            status_code=500,
-            content={"ok": False, "error": type(e).__name__, "detail": str(e)[:500]},
-        )
-
-@app.get("/")
-def read_root():
-    return FileResponse("static/graph_after_cognify").html
+# to reset the system (data + metadata)
+@app.post("/reset")
+async def reset():
+    await prune.prune_data()
+    await prune.prune_system(metadata=True)
+    return {"ok": True, "message": "System reset completed."}
