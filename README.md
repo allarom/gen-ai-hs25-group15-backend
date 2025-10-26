@@ -48,9 +48,12 @@ Note: Versions are pinned to avoid conflicts.
 
 🚀 Running the Application
 
+
 Inside the virtual environment, run:
 
+`cd app`
 `uvicorn main:app --reload`
+(you may encounter problems if you run it not from the app folder)
 
 
 Or to specify a custom port (e.g., 8080):
@@ -73,7 +76,7 @@ This will display the interactive Swagger UI, where you can test the available e
 `/chat` — upload a CV and and ask questions about eligibility. For example: "Can I apply for MBA programm?"
 Click on /chat, Try it out, upload docx CV and enter question. Click on execute. You can enter multiple questions. Offtopic questions will be not answered.
 
-We provide 2 CVs for testing, eligible and non eligible.
+We provide CVs for testing, eligible and non eligible in app/test-files folder
 
 `/reset` - clears state of the app, if for example requirement file was changed
 
