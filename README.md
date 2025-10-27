@@ -6,6 +6,12 @@ It uses the Cognee framework for knowledge ingestion, semantic memory, and graph
 
 ---
 
+
+
+https://github.com/user-attachments/assets/833240c9-9dfe-488f-991c-883ac8398e10
+
+
+
 ## 📦 Environment Configuration
 
 0️⃣ An `.env` file should be placed in the **root directory** (same level as `README.MD`) and include:
