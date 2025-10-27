@@ -1,30 +1,53 @@
-from fastapi import FastAPI, UploadFile, File, Form
-from fastapi.middleware.cors import CORSMiddleware
-from docx import Document
-from io import BytesIO
 import os
-from fastapi.staticfiles import StaticFiles
-from dotenv import load_dotenv
+from getpass import getpass
+from io import BytesIO
 from pathlib import Path
 from cognee import add, search, cognify, prune
 from cognee.api.v1.visualize.visualize import visualize_graph
+from docx import Document
+from dotenv import load_dotenv, set_key
+from fastapi import FastAPI, UploadFile, File, Form
+from fastapi.staticfiles import StaticFiles
 
- # .env should be placed in root of repo
+
+# .env should be placed in root of repo
 def load_env():
     repo_root = Path(__file__).resolve().parents[1]
     dotenv_path = repo_root / ".env"
+
     if dotenv_path.exists():
         load_dotenv(dotenv_path, override=False)
         print(f"[env] loaded {dotenv_path}")
 
-    # you need API keys for LLM 
+    openai_key = os.getenv("OPENAI_API_KEY")
+    llm_key = os.getenv("LLM_API_KEY")
+
+    # Prompt before app starts, so it's synchronous
+    if not openai_key and not llm_key:
+        print("\n⚠️  No LLM API key found.")
+        user_key = getpass("Enter your OpenAI or LLM API key: ").strip()
+        if user_key:
+            os.environ["OPENAI_API_KEY"] = user_key
+            os.environ["LLM_API_KEY"] = user_key
+
+            if not dotenv_path.exists():
+                dotenv_path.touch()
+            set_key(dotenv_path, "OPENAI_API_KEY", user_key)
+            set_key(dotenv_path, "LLM_API_KEY", user_key)
+            print(f"[env] ✅ API key saved to {dotenv_path}")
+        else:
+            print("[env] ❌ No key entered. The app may not start properly.")
+
     print("[env] OPENAI_API_KEY set:", bool(os.getenv("OPENAI_API_KEY")))
     print("[env] LLM_API_KEY set:", bool(os.getenv("LLM_API_KEY")))
 
+
+# Call this BEFORE creating FastAPI app
 load_env()
 
+
 data_dir = './cognee_data'
-study_requirements_file = 'HSG-MBA-application-requirements.docx' 
+study_requirements_file = 'HSG-MBA-application-requirements.docx'
 
 
 app = FastAPI(title="Minimal Cognee Chat")
