@@ -74,7 +74,7 @@ Click on
 
 You can enter multiple questions. Offtopic questions will be not answered.
 
-We provide CVs for testing, eligible and non eligible in **app/test-files** folder
+We provide CVs for testing, eligible and non eligible in **app/test-files** folder. We also tried to cover typical students questions, when they apply. 
 
 `/reset` - clears state of the app, if for example requirement file was changed
 
