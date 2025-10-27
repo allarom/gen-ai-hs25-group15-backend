@@ -1,6 +1,6 @@
 # 🧠 gen-ai-hs25-group15
 
-This application powers the **HSG MBA CV Screening RAG system** — it parses uploaded CVs, This app implements a Retrieval-Augmented Generation (RAG) chatbot that helps applicants check whether they meet the admission requirements for the University of St. Gallen Full-Time MBA program.
+This application powers the **HSG MBA CV Screening RAG system** — it parses uploaded CVs and answers program related questions. This app implements a Retrieval-Augmented Generation (RAG) chatbot that helps applicants check whether they meet the admission requirements for the University of St. Gallen Full-Time MBA program.
 
 It uses the Cognee framework for knowledge ingestion, semantic memory, and graph visualization — without needing any additional databases or orchestration layers.
 
@@ -66,7 +66,7 @@ This will display the interactive Swagger UI, where you can test the available e
 ```
 5️⃣ upload a CV and and ask questions about eligibility. For example: "Can I apply for MBA programm?"
 Click on 
--/chat
+- /chat
 - Try it out
 - upload docx CV
 - enter question
@@ -74,7 +74,8 @@ Click on
 
 You can enter multiple questions. Offtopic questions will be not answered.
 
-We provide CVs for testing, eligible and non eligible in **app/test-files** folder. We also tried to cover typical students questions, when they apply. 
+We provide CVs for testing, eligible and non eligible in **app/test-files** folder. We also tried to cover typical students questions, when they apply. So you can ask about programm start, duration, visa etc.
+To test next CV you can just reload the page. CV information is not stored in the knowledge graph in our use case. We also created a testing report, you will also find it in **app/test-files** folder.
 
 `/reset` - clears state of the app, if for example requirement file was changed
 
