@@ -58,6 +58,8 @@ async def chat(file: UploadFile = File(...), question: str = Form(...)):
         query_text=(
             "You are an admissions assistant for the HSG Full-Time MBA. "
             "Answer strictly using the CV summary and policy. "
+            "Pay attention when work experience was done, it needs to be after Bachelor's degree completion."
+            "And it should be at least 2 full-time years. "
             f"This is the applicant's CV: {cv_text}. "
             f"This is the applicant's question: {question}"
         ),
